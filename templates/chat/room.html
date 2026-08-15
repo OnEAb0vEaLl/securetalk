@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ room.name }} - SecureTalk{% endblock %}
+
+{% block extra_css %}
+<style>
+.chat-page .sidebar { display: none; }
+.chat-page .main-content { margin-left: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-page">
+    {% if error %}
+    <div class="error-container">
+        <h1>{{ error }}</h1>
+        <a href="{% url 'lobby' %}" class="btn btn-primary">Back to Lobby</a>
+    </div>
+    {% elif show_password_form %}
+    <div class="password-prompt">
+        <div class="prompt-card">
+            <div class="prompt-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <h2>{{ room.name }}</h2>
+            <p>This is a private room. Enter the password to join.</p>
+            
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+            
+            <form method="POST" action="{% url 'join_private_room' room_slug=room.slug %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="password" name="password" class="form-input" 
+                           placeholder="Room password" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Join Room</button>
+            </form>
+            <a href="{% url 'lobby' %}" class="back-link">Back to Lobby</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-left">
+                <a href="{% url 'lobby' %}" class="back-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </a>
+                <div class="room-info">
+                    <h1>{{ room.name }}</h1>
+                    <span class="member-count">{{ room.member_count }} members</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-icon" id="toggle-members" aria-label="Toggle members">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-icon dropdown-toggle" aria-label="Room options">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"/>
+                            <circle cx="19" cy="12" r="1"/>
+                            <circle cx="5" cy="12" r="1"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu">
+                        <form method="POST" action="{% url 'leave_room' room_slug=room.slug %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item danger">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                Leave Room
+                            </button>
+                        </form>
+                        {% if is_owner or request.user.role == 'admin' %}
+                        <form method="POST" action="{% url 'delete_room' room_slug=room.slug %}" 
+                              onsubmit="return confirm('Are you sure you want to delete this room?');">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item danger">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Delete Room
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-body">
+            <div class="messages-container" id="messages-container">
+                <div class="messages-list" id="messages-list">
+                    <!-- Messages will be loaded here -->
+                </div>
+                <div class="typing-indicators" id="typing-indicators"></div>
+            </div>
+            
+            <div class="members-panel" id="members-panel">
+                <h3>Members</h3>
+                <div class="members-section">
+                    <h4>Online — {{ online_members|length }}</h4>
+                    <ul class="members-list">
+                        {% for member in online_members %}
+                        <li>
+                            <a href="{% url 'profile' username=member.username %}" class="member-item">
+                                <img src="{% url 'avatar' user_id=member.id %}" alt="{{ member.username }}"
+                                     onerror="this.onerror=null; this.src='/static/images/default-avatar.svg';">
+                                <span class="online-dot"></span>
+                                <span class="member-name">{{ member.display_name|default:member.username }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="members-section">
+                    <h4>Offline — {{ offline_members|length }}</h4>
+                    <ul class="members-list offline">
+                        {% for member in offline_members %}
+                        <li>
+                            <a href="{% url 'profile' username=member.username %}" class="member-item">
+                                <img src="{% url 'avatar' user_id=member.id %}" alt="{{ member.username }}"
+                                     onerror="this.onerror=null; this.src='/static/images/default-avatar.svg';">
+                                <span class="member-name">{{ member.display_name|default:member.username }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-container">
+                <textarea id="message-input" placeholder="Type a message..." 
+                          rows="1" maxlength="2000"></textarea>
+                <span class="char-counter"><span id="char-count">0</span>/2000</span>
+            </div>
+            <button id="send-btn" class="btn btn-primary" aria-label="Send message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </button>
+        </div>
+        
+        <button class="scroll-to-bottom" id="scroll-to-bottom" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            <span class="unread-badge" id="unread-badge" style="display: none;">0</span>
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+{% if not error and not show_password_form %}
+<script src="/static/js/chatSocket.js"></script>
+<script>
+    const roomSlug = '{{ room.slug }}';
+    const currentUserId = '{{ request.user.id }}';
+    const currentUsername = '{{ request.user.username }}';
+    
+    // Initialize chat
+    const chat = new ChatSocket(roomSlug);
+    chat.connect();
+    
+    // DOM elements
+    const messagesList = document.getElementById('messages-list');
+    const messagesContainer = document.getElementById('messages-container');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const charCount = document.getElementById('char-count');
+    const scrollToBottomBtn = document.getElementById('scroll-to-bottom');
+    const unreadBadge = document.getElementById('unread-badge');
+    const typingIndicators = document.getElementById('typing-indicators');
+    
+    let unreadCount = 0;
+    let isAtBottom = true;
+    let typingUsers = new Map();
+    
+    // Message handlers
+    chat.onMessage((msg) => {
+        appendMessage(msg);
+        if (!isAtBottom) {
+            unreadCount++;
+            updateUnreadBadge();
+        }
+    });
+    
+    chat.onSystemMessage((content) => {
+        appendSystemMessage(content);
+    });
+    
+    chat.onTyping((data) => {
+        showTypingIndicator(data.username);
+    });
+    
+    chat.onHistory((messages) => {
+        messages.forEach(msg => appendMessage(msg, false));
+        scrollToBottom(true);
+    });
+    
+    // Append message to list
+    function appendMessage(msg, scroll = true) {
+        const isSelf = msg.author_id === currentUserId;
+        const messageEl = document.createElement('div');
+        messageEl.className = `message ${isSelf ? 'self' : ''}`;
+        messageEl.dataset.messageId = msg.message_id;
+        
+        const time = new Date(msg.timestamp);
+        const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageEl.innerHTML = `
+            <div class="message-avatar">
+                <img src="/profile/avatar/${msg.author_id}/" alt="${msg.author_username}"
+                     onerror="this.onerror=null; this.src='/static/images/default-avatar.svg';">
+            </div>
+            <div class="message-content">
+                <div class="message-header">
+                    <a href="/profile/${msg.author_username}/" class="message-author">${msg.author_name}</a>
+                    <span class="message-time" title="${time.toLocaleString()}">${timeStr}</span>
+                </div>
+                <div class="message-text">${escapeHtml(msg.content)}</div>
+            </div>
+        `;
+        
+        messagesList.appendChild(messageEl);
+        
+        if (scroll && isAtBottom) {
+            scrollToBottom();
+        }
+    }
+    
+    // Append system message
+    function appendSystemMessage(content) {
+        const messageEl = document.createElement('div');
+        messageEl.className = 'message system';
+        messageEl.innerHTML = `<span class="system-text">${escapeHtml(content)}</span>`;
+        messagesList.appendChild(messageEl);
+        
+        if (isAtBottom) {
+            scrollToBottom();
+        }
+    }
+    
+    // Typing indicator
+    function showTypingIndicator(username) {
+        if (username === currentUsername) return;
+        
+        typingUsers.set(username, Date.now());
+        updateTypingDisplay();
+        
+        setTimeout(() => {
+            if (Date.now() - typingUsers.get(username) >= 3000) {
+                typingUsers.delete(username);
+                updateTypingDisplay();
+            }
+        }, 3000);
+    }
+    
+    function updateTypingDisplay() {
+        if (typingUsers.size === 0) {
+            typingIndicators.innerHTML = '';
+            return;
+        }
+        
+        const names = Array.from(typingUsers.keys());
+        let text;
+        if (names.length === 1) {
+            text = `${names[0]} is typing...`;
+        } else if (names.length === 2) {
+            text = `${names[0]} and ${names[1]} are typing...`;
+        } else {
+            text = `${names.length} people are typing...`;
+        }
+        
+        typingIndicators.innerHTML = `
+            <div class="typing-indicator">
+                <span class="typing-dots">
+                    <span></span><span></span><span></span>
+                </span>
+                <span class="typing-text">${text}</span>
+            </div>
+        `;
+    }
+    
+    // Scroll handling
+    messagesContainer.addEventListener('scroll', () => {
+        const threshold = 100;
+        isAtBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+        
+        if (isAtBottom) {
+            scrollToBottomBtn.style.display = 'none';
+            unreadCount = 0;
+            updateUnreadBadge();
+        } else {
+            scrollToBottomBtn.style.display = 'flex';
+        }
+    });
+    
+    scrollToBottomBtn.addEventListener('click', () => {
+        scrollToBottom(true);
+        unreadCount = 0;
+        updateUnreadBadge();
+    });
+    
+    function scrollToBottom(force = false) {
+        if (force || isAtBottom) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+    
+    function updateUnreadBadge() {
+        if (unreadCount > 0) {
+            unreadBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            unreadBadge.style.display = 'flex';
+        } else {
+            unreadBadge.style.display = 'none';
+        }
+    }
+    
+    // Send message
+    function sendMessage() {
+        const content = messageInput.value.trim();
+        if (!content) return;
+        
+        chat.send(content);
+        messageInput.value = '';
+        charCount.textContent = '0';
+        adjustTextareaHeight();
+    }
+    
+    sendBtn.addEventListener('click', sendMessage);
+    
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Typing indicator
+    let typingTimeout;
+    messageInput.addEventListener('input', () => {
+        charCount.textContent = messageInput.value.length;
+        adjustTextareaHeight();
+        
+        clearTimeout(typingTimeout);
+        chat.sendTyping();
+        typingTimeout = setTimeout(() => {}, 3000);
+    });
+    
+    function adjustTextareaHeight() {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
+    }
+    
+    // Toggle members panel
+    document.getElementById('toggle-members').addEventListener('click', () => {
+        document.getElementById('members-panel').classList.toggle('open');
+    });
+    
+    // Helper function
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endif %}
+{% endblock %}

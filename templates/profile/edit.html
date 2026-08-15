@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="settings-container">
+        <div class="settings-header">
+            <h1>Edit Profile</h1>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+        
+        {% if success %}
+        <div class="alert alert-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>{{ success }}</span>
+        </div>
+        {% endif %}
+        
+        <form method="POST" enctype="multipart/form-data" class="settings-form">
+            {% csrf_token %}
+            
+            <!-- Avatar Section -->
+            <div class="form-section">
+                <h2>Avatar</h2>
+                <div class="avatar-upload">
+                    <div class="current-avatar">
+                        <img src="{% url 'avatar' user_id=request.user.id %}" 
+     alt="Current avatar" id="avatar-preview"
+     onerror="this.onerror=null; this.src='/static/images/default-avatar.svg';">
+                    </div>
+                    <div class="avatar-controls">
+                        <input type="file" id="avatar" name="avatar" 
+                               accept="image/jpeg,image/png,image/gif,image/webp"
+                               class="file-input">
+                        <label for="avatar" class="btn btn-secondary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span>Upload New Avatar</span>
+                        </label>
+                        <p class="file-hint">Max 2MB. JPEG, PNG, GIF, or WebP.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Info Section -->
+            <div class="form-section">
+                <h2>Profile Information</h2>
+                
+                <div class="form-group">
+                    <label for="display_name">Display Name</label>
+                    <input type="text" id="display_name" name="display_name" 
+                           class="form-input" placeholder="How others will see you"
+                           value="{{ form.display_name.value|default:request.user.display_name }}"
+                           maxlength="50">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bio">Bio</label>
+                    <textarea id="bio" name="bio" class="form-textarea" 
+                              placeholder="Tell us about yourself..."
+                              rows="4" maxlength="300">{{ form.bio.value|default:request.user.bio }}</textarea>
+                    <span class="char-counter"><span id="bio-count">{{ request.user.bio|length|default:0 }}</span>/300</span>
+                </div>
+            </div>
+            
+            <!-- Preferences Section -->
+            <div class="form-section">
+                <h2>Preferences</h2>
+                
+                <div class="form-group">
+                    <label for="theme">Theme</label>
+                    <select id="theme" name="theme" class="form-select">
+                        <option value="dark" {% if request.user.theme == 'dark' %}selected{% endif %}>Dark</option>
+                        <option value="light" {% if request.user.theme == 'light' %}selected{% endif %}>Light</option>
+                    </select>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="notification_sounds" 
+                               {% if request.user.notification_sounds %}checked{% endif %}>
+                        <span class="checkbox-text">Enable notification sounds</span>
+                    </label>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="show_online_status" 
+                               {% if request.user.show_online_status %}checked{% endif %}>
+                        <span class="checkbox-text">Show online status to others</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Security Section -->
+            <div class="form-section">
+                <h2>Security</h2>
+                
+                <div class="security-links">
+                    <a href="{% url 'change_password' %}" class="security-link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <div>
+                            <strong>Change Password</strong>
+                            <span>Update your password</span>
+                        </div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </a>
+                    
+                    <a href="{% url 'mfa_manage' %}" class="security-link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <div>
+                            <strong>Multi-Factor Authentication</strong>
+                            <span>
+                                {% if request.user.mfa_methods %}
+                                {{ request.user.mfa_methods|length }} method(s) enabled
+                                {% else %}
+                                Not configured
+                                {% endif %}
+                            </span>
+                        </div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span>Save Changes</span>
+                </button>
+                <a href="{% url 'profile' username=request.user.username %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Avatar preview
+document.getElementById('avatar').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatar-preview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Bio character counter
+document.getElementById('bio').addEventListener('input', function() {
+    document.getElementById('bio-count').textContent = this.value.length;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Email - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container verify-container">
+        <div class="auth-header">
+            <div class="brand-logo {% if success %}success{% endif %}">
+                {% if success %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                {% else %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {% endif %}
+            </div>
+            
+            {% if success %}
+            <h1>Email Verified!</h1>
+            <p>{{ success }}</p>
+            <a href="{% url 'lobby' %}" class="btn btn-primary">
+                <span>Continue to Chat</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                </svg>
+            </a>
+            {% else %}
+            <h1>Verification Failed</h1>
+            <p>{{ error }}</p>
+            <a href="{% url 'login' %}" class="btn btn-secondary">
+                <span>Back to Login</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

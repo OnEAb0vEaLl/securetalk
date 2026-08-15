@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Email MFA Enabled - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="mfa-page">
+    <div class="mfa-setup-container">
+        <div class="mfa-header success">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            </div>
+            <h1>Email MFA Enabled!</h1>
+            <p>You'll receive a verification code via email when you log in</p>
+        </div>
+        
+        <div class="success-info">
+            <div class="info-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <p>Codes will be sent to your registered email address</p>
+            </div>
+            <div class="info-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <p>Codes expire after 10 minutes</p>
+            </div>
+        </div>
+        
+        <div class="mfa-actions">
+            <a href="{% url 'mfa_manage' %}" class="btn btn-primary">
+                <span>Manage MFA Settings</span>
+            </a>
+            <a href="{% url 'lobby' %}" class="btn btn-secondary">
+                <span>Continue to Chat</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

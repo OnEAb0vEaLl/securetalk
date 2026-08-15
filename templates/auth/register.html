@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account - SecureTalk{% endblock %}
+
+{% block content %}
+
+<div class="auth-split">
+  {# ── LEFT: Form pane ──────────────────────────────────── #}
+  <div class="auth-form-pane">
+    <div class="auth-form-inner">
+
+      {# Logo #}
+      <div class="auth-form-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <span>SecureTalk</span>
+      </div>
+
+      <h2 class="auth-form-title">Create account</h2>
+      <p class="auth-form-subtitle">Join SecureTalk and start chatting securely.</p>
+
+      {# Error alert #}
+      {% if error %}
+      <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form method="POST" class="auth-form" id="register-form">
+        {% csrf_token %}
+
+        {# Username #}
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-wrapper">
+            <input type="text" id="username" name="username"
+                   class="form-input" placeholder="Choose a username"
+                   value="{{ form.username.value|default:'' }}"
+                   pattern="[a-zA-Z0-9_]{3,30}"
+                   required autocomplete="username">
+            <span class="input-status" id="username-status"></span>
+          </div>
+          <span class="input-hint">3–30 characters. Letters, numbers, and underscores only.</span>
+        </div>
+
+        {# Email #}
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email"
+                 class="form-input" placeholder="you@example.com"
+                 value="{{ form.email.value|default:'' }}"
+                 required autocomplete="email">
+        </div>
+
+        {# Display name #}
+        <div class="form-group">
+          <label for="display_name">
+            Display Name <span class="optional">(optional)</span>
+          </label>
+          <input type="text" id="display_name" name="display_name"
+                 class="form-input" placeholder="How others will see you"
+                 value="{{ form.display_name.value|default:'' }}"
+                 maxlength="50">
+        </div>
+
+        {# Password #}
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password"
+                   class="form-input" placeholder="Create a strong password"
+                   required autocomplete="new-password" minlength="8">
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="password-meter" id="password-meter">
+            <div class="meter-bar">
+              <div class="meter-fill" id="meter-fill"></div>
+            </div>
+            <div class="meter-info">
+              <span class="meter-label" id="meter-label">Enter a password</span>
+            </div>
+          </div>
+          <div class="password-feedback" id="password-feedback"></div>
+        </div>
+
+        {# Confirm password #}
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="confirm-password" name="confirm_password"
+                   class="form-input" placeholder="Confirm your password"
+                   required autocomplete="new-password">
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="password-match" id="password-match"></div>
+        </div>
+
+        {# Turnstile #}
+        <div class="turnstile-container">
+          <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
+          <span>Create Account</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+      </div>
+
+    </div>
+  </div>{# /auth-form-pane #}
+
+  {# ── RIGHT: Brand pane ────────────────────────────────── #}
+  <div class="auth-brand-pane">
+    <div class="brand-grid"></div>
+    <div class="auth-brand-content">
+
+      <div class="auth-brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+
+      <h1 class="auth-brand-heading">Why choose<br>SecureTalk?</h1>
+      <p class="auth-brand-sub">
+        Built for people who take privacy seriously.
+        No ads, no tracking, no compromises.
+      </p>
+
+      <div class="brand-features">
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="brand-feature-text">
+            <strong>End-to-End Security</strong>
+            <span>Your conversations are protected with industry-standard encryption</span>
+          </div>
+        </div>
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div class="brand-feature-text">
+            <strong>Multi-Factor Authentication</strong>
+            <span>Add an extra layer of security with TOTP or email codes</span>
+          </div>
+        </div>
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="brand-feature-text">
+            <strong>Community Rooms</strong>
+            <span>Create public or private rooms for any group or topic</span>
+          </div>
+        </div>
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="brand-feature-text">
+            <strong>Real-Time Chat</strong>
+            <span>Instant messages with typing indicators and presence</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="brand-stats">
+        <div>
+          <div class="brand-stat-val">Free</div>
+          <div class="brand-stat-lbl">Always</div>
+        </div>
+        <div>
+          <div class="brand-stat-val">bcrypt</div>
+          <div class="brand-stat-lbl">Encryption</div>
+        </div>
+        <div>
+          <div class="brand-stat-val">No Ads</div>
+          <div class="brand-stat-lbl">Ever</div>
+        </div>
+      </div>
+
+    </div>
+  </div>{# /auth-brand-pane #}
+</div>{# /auth-split #}
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="/static/js/passwordMeter.js"></script>
+<script src="/static/js/turnstileHelper.js"></script>
+<script>
+  // ── Username availability check ────────────────────────
+  const usernameInput = document.getElementById('username');
+  const usernameStatus = document.getElementById('username-status');
+  let usernameTimer;
+
+  usernameInput.addEventListener('input', () => {
+    clearTimeout(usernameTimer);
+    const val = usernameInput.value.trim();
+
+    if (val.length < 3) {
+      usernameStatus.innerHTML = '';
+      return;
+    }
+
+    usernameStatus.innerHTML = '<span class="status-checking">Checking…</span>';
+
+    usernameTimer = setTimeout(() => {
+      fetch(`/auth/check-username/?username=${encodeURIComponent(val)}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.available) {
+            usernameStatus.innerHTML = '<span class="status-success">✓ Available</span>';
+          } else {
+            usernameStatus.innerHTML = `<span class="status-error">✗ ${d.message}</span>`;
+          }
+        })
+        .catch(() => {
+          usernameStatus.innerHTML = '';
+        });
+    }, 500);
+  });
+
+  // ── Password visibility toggles ────────────────────────
+  document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.parentElement.querySelector('input');
+      input.type = input.type === 'password' ? 'text' : 'password';
+      btn.classList.toggle('showing');
+    });
+  });
+</script>
+
+<style>
+  /* Password feedback styles */
+  .password-feedback {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    min-height: 1.25rem;
+  }
+
+  .password-feedback:empty {
+    display: none;
+  }
+
+  .password-feedback .feedback-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-right: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .password-feedback .feedback-item.missing {
+    color: var(--danger, #ef4444);
+  }
+
+  .password-feedback .feedback-item.present {
+    color: var(--success, #22c55e);
+  }
+
+  .password-feedback .feedback-item svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Password match styles */
+  .password-match {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-height: 1rem;
+  }
+
+  .password-match .success {
+    color: var(--success, #22c55e);
+  }
+
+  .password-match .error {
+    color: var(--danger, #ef4444);
+  }
+
+  /* Meter info layout */
+  .meter-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.375rem;
+  }
+
+  .meter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: color 0.2s ease;
+  }
+
+  /* Status indicator styles */
+  .status-checking {
+    color: var(--text-muted, #9ca3af);
+    font-size: 0.75rem;
+  }
+
+  .status-success {
+    color: var(--success, #22c55e);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .status-error {
+    color: var(--danger, #ef4444);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+</style>
+{% endblock %}

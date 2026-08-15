@@ -1,0 +1,773 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management - SecureTalk Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Admin Page Styles */
+.admin-page {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.user-count {
+    background: var(--bg-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Filter Bar */
+.filter-bar {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.filter-group .form-select,
+.filter-group .form-input {
+    min-width: 150px;
+}
+
+.search-group .form-input {
+    min-width: 200px;
+}
+
+/* Data Table */
+.data-table-container {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: visible; /* Changed from hidden to visible for dropdown */
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table tbody tr:hover {
+    background: var(--bg-tertiary);
+}
+
+.data-table tbody tr.current-user {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.data-table tbody tr.deleted {
+    opacity: 0.6;
+}
+
+/* User Cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-avatar-sm {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-cell a {
+    color: var(--text-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.user-cell a:hover {
+    color: var(--primary);
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.badge.user {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}
+
+.badge.moderator {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.badge.admin {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.badge.success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+
+.badge.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.badge.danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.badge.secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.btn-icon {
+    padding: 0.4rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+}
+
+.btn-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Dropdown Styles */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    cursor: pointer;
+}
+
+.dropdown-toggle::after {
+    display: none; /* Remove default arrow if any */
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+    min-width: 160px;
+    padding: 0.5rem 0;
+    margin-top: 0.25rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+}
+
+.dropdown.open .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.dropdown-item.danger {
+    color: #ef4444;
+}
+
+.dropdown-item.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.dropdown-menu hr {
+    margin: 0.5rem 0;
+    border: none;
+    border-top: 1px solid var(--border);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+}
+
+.page-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Empty State */
+.empty-message {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 3rem !important;
+}
+
+/* Text Muted */
+.text-muted {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .filter-group .form-select,
+    .filter-group .form-input {
+        width: 100%;
+    }
+    
+    .data-table-container {
+        overflow-x: auto;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+    }
+}
+
+/* Overlay for closing dropdown */
+.dropdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    display: none;
+}
+
+.dropdown-overlay.active {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>User Management</h1>
+        <span class="user-count">{{ total }} users</span>
+    </div>
+    
+    <div class="filter-bar">
+        <form method="GET" class="filter-form" id="filter-form">
+            <div class="filter-group">
+                <label for="role">Role</label>
+                <select name="role" id="role" class="form-select">
+                    <option value="">All Roles</option>
+                    <option value="user" {% if role_filter == 'user' %}selected{% endif %}>User</option>
+                    <option value="moderator" {% if role_filter == 'moderator' %}selected{% endif %}>Moderator</option>
+                    <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="locked">Status</label>
+                <select name="locked" id="locked" class="form-select">
+                    <option value="">All</option>
+                    <option value="true" {% if locked_filter == 'true' %}selected{% endif %}>Locked</option>
+                    <option value="false" {% if locked_filter == 'false' %}selected{% endif %}>Active</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="mfa">MFA</label>
+                <select name="mfa" id="mfa" class="form-select">
+                    <option value="">All</option>
+                    <option value="true" {% if mfa_filter == 'true' %}selected{% endif %}>Enabled</option>
+                    <option value="false" {% if mfa_filter == 'false' %}selected{% endif %}>Disabled</option>
+                </select>
+            </div>
+            
+            <div class="filter-group search-group">
+                <label for="search">Search</label>
+                <input type="text" name="search" id="search" class="form-input"
+                       placeholder="Username or email" value="{{ search }}">
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{% url 'admin_users' %}" class="btn btn-secondary">Clear</a>
+        </form>
+    </div>
+    
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>MFA</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="{% if user.id == request.user.id %}current-user{% endif %} {% if user.is_deleted %}deleted{% endif %}">
+                    <td>
+                        <div class="user-cell">
+                            <img src="{% url 'avatar' user_id=user.id %}" alt="{{ user.username }}"
+                                 class="user-avatar-sm" onerror="this.onerror=null; this.src='/static/images/default-avatar.svg';">
+                            <div>
+                                <a href="{% url 'profile' username=user.username %}">{{ user.username }}</a>
+                                {% if user.is_deleted %}<span class="badge danger">Deleted</span>{% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td><span class="badge {{ user.role }}">{{ user.role|title }}</span></td>
+                    <td>
+                        {% if user.mfa_methods %}
+                        <span class="badge success">{{ user.mfa_methods|join:", " }}</span>
+                        {% else %}
+                        <span class="badge secondary">None</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_locked %}
+                        <span class="badge danger">Locked</span>
+                        {% elif not user.email_verified %}
+                        <span class="badge warning">Unverified</span>
+                        {% else %}
+                        <span class="badge success">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.last_login_time %}
+                        {{ user.last_login_time|date:"M d, Y H:i" }}
+                        {% else %}
+                        Never
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.id != request.user.id %}
+                        <div class="action-buttons">
+                            {% if user.is_locked %}
+                            <button class="btn btn-sm btn-success" onclick="unlockUser('{{ user.id }}')">Unlock</button>
+                            {% else %}
+                            <button class="btn btn-sm btn-warning" onclick="lockUser('{{ user.id }}')">Lock</button>
+                            {% endif %}
+                            
+                            <button class="btn btn-sm btn-secondary" onclick="forceReset('{{ user.id }}')">Force Reset</button>
+                            
+                            <div class="dropdown" data-dropdown>
+                                <button type="button" class="btn btn-sm btn-icon dropdown-toggle" data-dropdown-toggle>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="1"/>
+                                        <circle cx="12" cy="5" r="1"/>
+                                        <circle cx="12" cy="19" r="1"/>
+                                    </svg>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <button type="button" class="dropdown-item" onclick="changeRole('{{ user.id }}', 'user')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:8px;vertical-align:middle;">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="12" cy="7" r="4"/>
+                                        </svg>
+                                        Set User
+                                    </button>
+                                    <button type="button" class="dropdown-item" onclick="changeRole('{{ user.id }}', 'moderator')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:8px;vertical-align:middle;">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        </svg>
+                                        Set Moderator
+                                    </button>
+                                    <button type="button" class="dropdown-item" onclick="changeRole('{{ user.id }}', 'admin')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:8px;vertical-align:middle;">
+                                            <circle cx="12" cy="12" r="3"/>
+                                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                        </svg>
+                                        Set Admin
+                                    </button>
+                                    <hr>
+                                    {% if user.mfa_methods %}
+                                    <button type="button" class="dropdown-item" onclick="resetMFA('{{ user.id }}')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:8px;vertical-align:middle;">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                        </svg>
+                                        Reset MFA
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="dropdown-item danger" onclick="deleteUser('{{ user.id }}')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:8px;vertical-align:middle;">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                            <line x1="10" y1="11" x2="10" y2="17"/>
+                                            <line x1="14" y1="11" x2="14" y2="17"/>
+                                        </svg>
+                                        Delete User
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-muted">Current user</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-message">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="?page={{ page|add:-1 }}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if locked_filter %}&locked={{ locked_filter }}{% endif %}{% if mfa_filter %}&mfa={{ mfa_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="btn btn-secondary">Previous</a>
+        {% endif %}
+        
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+        
+        {% if page < total_pages %}
+        <a href="?page={{ page|add:1 }}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if locked_filter %}&locked={{ locked_filter }}{% endif %}{% if mfa_filter %}&mfa={{ mfa_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="btn btn-secondary">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Overlay for closing dropdowns when clicking outside -->
+<div class="dropdown-overlay" id="dropdown-overlay"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+
+// ============================================================
+// DROPDOWN MANAGEMENT
+// ============================================================
+
+function initDropdowns() {
+    const dropdowns = document.querySelectorAll('[data-dropdown]');
+    const overlay = document.getElementById('dropdown-overlay');
+    
+    dropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('[data-dropdown-toggle]');
+        
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Close all other dropdowns
+            dropdowns.forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('open');
+                }
+            });
+            
+            // Toggle this dropdown
+            dropdown.classList.toggle('open');
+            
+            // Toggle overlay
+            overlay.classList.toggle('active', dropdown.classList.contains('open'));
+        });
+    });
+    
+    // Close dropdowns when clicking overlay
+    overlay.addEventListener('click', () => {
+        dropdowns.forEach(d => d.classList.remove('open'));
+        overlay.classList.remove('active');
+    });
+    
+    // Close dropdowns when clicking dropdown items
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+            dropdowns.forEach(d => d.classList.remove('open'));
+            overlay.classList.remove('active');
+        });
+    });
+    
+    // Close dropdowns on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dropdowns.forEach(d => d.classList.remove('open'));
+            overlay.classList.remove('active');
+        }
+    });
+}
+
+// Initialize dropdowns on page load
+document.addEventListener('DOMContentLoaded', initDropdowns);
+
+// ============================================================
+// USER ACTIONS
+// ============================================================
+
+async function lockUser(userId) {
+    if (!confirm('Are you sure you want to lock this user?')) return;
+    
+    try {
+        const response = await fetch(`/admin/users/${userId}/lock/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        if (response.ok) {
+            showToast('User locked successfully', 'success');
+            location.reload();
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to lock user', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to lock user', 'error');
+    }
+}
+
+async function unlockUser(userId) {
+    try {
+        const response = await fetch(`/admin/users/${userId}/unlock/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        if (response.ok) {
+            showToast('User unlocked successfully', 'success');
+            location.reload();
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to unlock user', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to unlock user', 'error');
+    }
+}
+
+async function forceReset(userId) {
+    if (!confirm('Force this user to reset their password on next login?')) return;
+    
+    try {
+        const response = await fetch(`/admin/users/${userId}/force-reset/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        if (response.ok) {
+            showToast('User will be required to reset password', 'success');
+            location.reload();
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to force reset', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to force reset', 'error');
+    }
+}
+
+async function changeRole(userId, role) {
+    const roleNames = { user: 'User', moderator: 'Moderator', admin: 'Admin' };
+    if (!confirm(`Change this user's role to ${roleNames[role]}?`)) return;
+    
+    try {
+        const formData = new FormData();
+        formData.append('role', role);
+        
+        const response = await fetch(`/admin/users/${userId}/role/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData
+        });
+        
+        if (response.ok) {
+            showToast('Role changed successfully', 'success');
+            location.reload();
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to change role', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to change role', 'error');
+    }
+}
+
+async function resetMFA(userId) {
+    if (!confirm('Reset all MFA methods for this user? They will need to set up MFA again.')) return;
+    
+    try {
+        const response = await fetch(`/admin/users/${userId}/reset-mfa/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        if (response.ok) {
+            showToast('MFA reset successfully', 'success');
+            location.reload();
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to reset MFA', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to reset MFA', 'error');
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Are you sure you want to delete this user?\n\nThis action will:\n• Mark the account as deleted\n• Preserve audit logs\n• Prevent login\n\nThis cannot be undone.')) return;
+    
+    try {
+        const response = await fetch(`/admin/users/${userId}/delete/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        if (response.ok) {
+            showToast('User deleted successfully', 'success');
+            location.reload();
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to delete user', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to delete user', 'error');
+    }
+}
+
+// ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icons = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    };
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+</script>
+{% endblock %}

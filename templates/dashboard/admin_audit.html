@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Log - SecureTalk Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Audit Log</h1>
+        <a href="{% url 'admin_audit_export' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export CSV
+        </a>
+    </div>
+    
+    <div class="filter-panel">
+        <form method="GET" class="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Category</label>
+                    <div class="checkbox-group">
+                        {% for cat in categories %}
+                        <label class="checkbox-pill">
+                            <input type="checkbox" name="category" value="{{ cat }}"
+                                   {% if cat in selected_categories %}checked{% endif %}>
+                            <span>{{ cat }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Severity</label>
+                    <div class="checkbox-group">
+                        {% for sev in severities %}
+                        <label class="checkbox-pill {{ sev|lower }}">
+                            <input type="checkbox" name="severity" value="{{ sev }}"
+                                   {% if sev in selected_severities %}checked{% endif %}>
+                            <span>{{ sev }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="date_from">From Date</label>
+                    <input type="date" name="date_from" id="date_from" 
+                           class="form-input" value="{{ date_from }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="date_to">To Date</label>
+                    <input type="date" name="date_to" id="date_to" 
+                           class="form-input" value="{{ date_to }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="actor">Actor</label>
+                    <input type="text" name="actor" id="actor" class="form-input"
+                           placeholder="Username" value="{{ actor_filter }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="action">Action</label>
+                    <input type="text" name="action" id="action" class="form-input"
+                           placeholder="Action name" value="{{ action_filter }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="ip">IP Address</label>
+                    <input type="text" name="ip" id="ip" class="form-input"
+                           placeholder="IP address" value="{{ ip_filter }}">
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="{% url 'admin_audit' %}" class="btn btn-secondary">Clear All</a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="data-table-container">
+        <table class="data-table audit-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Target</th>
+                    <th>IP Address</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="severity-{{ log.severity|lower }}" onclick="showLogDetail('{{ log.id }}')">
+                    <td class="timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    <td><span class="badge category-{{ log.category|lower }}">{{ log.category }}</span></td>
+                    <td><span class="badge severity-{{ log.severity|lower }}">{{ log.severity }}</span></td>
+                    <td class="action">{{ log.action }}</td>
+                    <td>{{ log.actor_username|default:"-" }}</td>
+                    <td>{{ log.target_username|default:"-" }}</td>
+                    <td class="ip">{{ log.ip_address|default:"-" }}</td>
+                    <td>
+                        <button class="btn btn-icon btn-sm">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-message">No audit logs found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="?page={{ page|add:-1 }}&{{ request.GET.urlencode }}" class="btn btn-secondary">Previous</a>
+        {% endif %}
+        
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+        
+        {% if page < total_pages %}
+        <a href="?page={{ page|add:1 }}&{{ request.GET.urlencode }}" class="btn btn-secondary">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Log Detail Modal -->
+<div class="modal" id="log-detail-modal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Audit Log Details</h2>
+            <button class="btn btn-icon" onclick="closeModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" id="log-detail-content">
+            <div class="loading">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function showLogDetail(logId) {
+    const modal = document.getElementById('log-detail-modal');
+    const content = document.getElementById('log-detail-content');
+    
+    modal.classList.add('open');
+    content.innerHTML = '<div class="loading">Loading...</div>';
+    
+    try {
+        const response = await fetch(`/admin/audit/${logId}/`);
+        const data = await response.json();
+        
+        content.innerHTML = `
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Timestamp</label>
+                    <span>${new Date(data.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Category</label>
+                    <span class="badge category-${data.category.toLowerCase()}">${data.category}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Severity</label>
+                    <span class="badge severity-${data.severity.toLowerCase()}">${data.severity}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Action</label>
+                    <span>${data.action}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Actor</label>
+                    <span>${data.actor_username || '-'}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Target</label>
+                    <span>${data.target_username || '-'}</span>
+                </div>
+                <div class="detail-item">
+                    <label>IP Address</label>
+                    <span>${data.ip_address || '-'}</span>
+                </div>
+                <div class="detail-item full-width">
+                    <label>User Agent</label>
+                    <span class="user-agent">${data.user_agent || '-'}</span>
+                </div>
+                <div class="detail-item full-width">
+                    <label>Details</label>
+                    <pre class="json-view">${JSON.stringify(data.details, null, 2)}</pre>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        content.innerHTML = '<div class="error">Failed to load log details.</div>';
+    }
+}
+
+function closeModal() {
+    document.getElementById('log-detail-modal').classList.remove('open');
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Reset Password - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container reset-container">
+        <div class="auth-header">
+            <div class="brand-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M9 12l2 2 4-4"/>
+                </svg>
+            </div>
+            <h1>Create New Password</h1>
+            <p>Choose a strong password for your account</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+        
+        {% if success %}
+        <div class="alert alert-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>{{ success }}</span>
+        </div>
+        
+        {% if redirect_login %}
+        <a href="{% url 'login' %}" class="btn btn-primary btn-block">
+            <span>Go to Login</span>
+        </a>
+        {% endif %}
+        {% endif %}
+        
+        {% if invalid_token %}
+        <div class="alert alert-error">
+            <span>This reset link is invalid or has expired.</span>
+        </div>
+        <a href="{% url 'forgot' %}" class="btn btn-secondary btn-block">
+            <span>Request New Link</span>
+        </a>
+        {% elif not success %}
+        <form method="POST" class="auth-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="password">New Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" 
+                           class="form-input" placeholder="Create a strong password"
+                           required autocomplete="new-password" minlength="8">
+                    <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                        <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="password-meter" id="password-meter">
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="meter-fill"></div>
+                    </div>
+                    <span class="meter-label" id="meter-label">Enter a password</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirm-password" name="confirm_password" 
+                           class="form-input" placeholder="Confirm your password"
+                           required autocomplete="new-password">
+                    <span class="password-match" id="password-match"></span>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                <span>Reset Password</span>
+            </button>
+        </form>
+        {% endif %}
+        
+        <div class="auth-footer">
+            <p><a href="{% url 'login' %}">Back to login</a></p>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/passwordMeter.js"></script>
+<script>
+    document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = btn.parentElement.querySelector('input');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            btn.classList.toggle('showing', !isPassword);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Locked - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container unlock-container">
+        <div class="auth-header">
+            <div class="brand-logo locked">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <h1>Account Locked</h1>
+            <p>Your account has been locked due to multiple failed login attempts.</p>
+        </div>
+        
+        <div class="unlock-info">
+            <div class="info-card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <div>
+                    <h3>Check Your Email</h3>
+                    <p>We've sent an unlock link to <strong>{{ email }}</strong></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="unlock-instructions">
+            <h3>What to do next:</h3>
+            <ol>
+                <li>Check your email inbox (and spam folder)</li>
+                <li>Click the unlock link in the email</li>
+                <li>Your account will be unlocked immediately</li>
+                <li>Log in with your correct password</li>
+            </ol>
+        </div>
+        
+        <div class="security-notice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <p>If you didn't attempt to log in, someone may be trying to access your account. We recommend changing your password after unlocking.</p>
+        </div>
+        
+        <div class="auth-footer">
+            <a href="{% url 'login' %}">Back to Login</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

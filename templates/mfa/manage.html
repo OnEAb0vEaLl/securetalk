@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}MFA Settings - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="settings-container">
+        <div class="settings-header">
+            <h1>Multi-Factor Authentication</h1>
+            <p>Manage your account security settings</p>
+        </div>
+        
+        <div class="mfa-methods">
+            <!-- TOTP Method -->
+            <div class="method-card {% if totp_enabled %}enabled{% endif %}">
+                <div class="method-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                        <line x1="12" y1="18" x2="12.01" y2="18"/>
+                    </svg>
+                </div>
+                <div class="method-info">
+                    <h3>Authenticator App</h3>
+                    <p>Use an authenticator app to generate verification codes</p>
+                    {% if totp_enabled %}
+                    <span class="status-badge active">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Active
+                    </span>
+                    {% else %}
+                    <span class="status-badge inactive">Not configured</span>
+                    {% endif %}
+                </div>
+                <div class="method-action">
+                    {% if totp_enabled %}
+                    <form method="POST" action="{% url 'mfa_remove' %}" onsubmit="return confirm('Are you sure you want to remove authenticator app MFA?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="method" value="totp">
+                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                    </form>
+                    {% else %}
+                    <a href="{% url 'mfa_setup_totp' %}" class="btn btn-primary btn-sm">Set Up</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Email Method -->
+            <div class="method-card {% if email_enabled %}enabled{% endif %}">
+                <div class="method-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                </div>
+                <div class="method-info">
+                    <h3>Email Verification</h3>
+                    <p>Receive verification codes via email</p>
+                    {% if email_enabled %}
+                    <span class="status-badge active">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Active
+                    </span>
+                    {% else %}
+                    <span class="status-badge inactive">Not configured</span>
+                    {% endif %}
+                </div>
+                <div class="method-action">
+                    {% if email_enabled %}
+                    <form method="POST" action="{% url 'mfa_remove' %}" onsubmit="return confirm('Are you sure you want to remove email MFA?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="method" value="email">
+                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="{% url 'mfa_setup_email' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm">Enable</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if not totp_enabled and not email_enabled %}
+        <div class="alert alert-warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>No MFA methods are enabled. Your account security is reduced.</span>
+        </div>
+        {% endif %}
+        
+        <div class="settings-footer">
+            <a href="{% url 'profile_edit' %}" class="btn btn-secondary">Back to Settings</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

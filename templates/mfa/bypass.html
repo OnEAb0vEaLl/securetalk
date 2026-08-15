@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}MFA Bypass - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container mfa-bypass-container">
+        <div class="auth-header">
+            <div class="brand-logo warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </div>
+            <h1>MFA Bypass</h1>
+            <p>We sent a bypass code to {{ email }}</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+        
+        <div class="alert alert-warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>After bypassing, we strongly recommend reconfiguring your MFA settings.</span>
+        </div>
+        
+        <form method="POST" class="mfa-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="code">Bypass Code</label>
+                <input type="text" id="code" name="code" 
+                       class="form-input code-input" 
+                       placeholder="000000" maxlength="6"
+                       pattern="[0-9]{6}" inputmode="numeric"
+                       autocomplete="one-time-code" required autofocus>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                <span>Verify & Bypass MFA</span>
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <a href="{% url 'mfa_verify' %}">Back to MFA verification</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

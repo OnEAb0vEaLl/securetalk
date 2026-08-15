@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Set Up Authenticator - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="mfa-page">
+  <div class="mfa-setup-container">
+    <div class="mfa-header">
+      <h1>Set Up Authenticator App</h1>
+      <p>Scan the QR code with your authenticator app</p>
+    </div>
+
+    <form method="POST" action="{% url 'mfa_setup_totp_confirm' %}" class="verify-form" id="mfa-setup-form">
+      {% csrf_token %}
+      
+      <div class="setup-steps">
+        {# Step 1 & 2 remain unchanged #}
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <h3>Install an Authenticator App</h3>
+            <p>Download Google Authenticator, Authy, or any TOTP-compatible app</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">2</span>
+          <div class="step-content">
+            <h3>Scan QR Code</h3>
+            <div class="qr-container">
+              <img src="{{ qr_code }}" alt="QR Code" class="qr-code">
+            </div>
+            <p class="manual-entry">
+              Can't scan? Enter this code manually:
+              <span class="secret-key" id="secret-key">{{ secret }}</span>
+              </p>
+          </div>
+        </div>
+
+        {# Step 3: Input Only #}
+        <div class="step">
+          <span class="step-number">3</span>
+          <div class="step-content">
+            <h3>Enter Verification Code</h3>
+            <p>Enter the 6-digit code from your authenticator app</p>
+            <div class="code-input-wrapper">
+              <input type="text" name="code" class="code-input"
+                     placeholder="0 0 0 0 0 0" maxlength="6"
+                     pattern="[0-9]{6}" inputmode="numeric" required>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mfa-footer">
+        <a href="{% url 'mfa_manage' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Verify & Enable</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+<style>
+  /* Footer Layout for Parallel Buttons */
+  .mfa-footer {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Make both buttons take up equal space */
+  .mfa-footer .btn {
+    flex: 1;
+    height: 48px;
+    justify-content: center;
+  }
+
+  /* Clean up the Step 3 input spacing since button is moved */
+  .code-input-wrapper {
+    margin-top: 16px;
+  }
+
+  .code-input {
+    width: 100%;
+    text-align: center;
+    font-size: 1.75rem;
+    letter-spacing: 0.5rem;
+    padding: 14px;
+    background: var(--bg-input);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-family: var(--font-mono);
+  }
+</style>

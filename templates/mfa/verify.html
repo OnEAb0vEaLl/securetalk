@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Identity - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container mfa-verify-container">
+        <div class="auth-header">
+            <div class="brand-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M9 12l2 2 4-4"/>
+                </svg>
+            </div>
+            <h1>Verify Your Identity</h1>
+            
+            {% if show_selection %}
+            <p>Choose a verification method</p>
+            {% elif method == 'email' %}
+            <p>Enter the code sent to {{ email }}</p>
+            {% else %}
+            <p>Enter the code from your authenticator app</p>
+            {% endif %}
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+        
+        {% if show_selection %}
+        <div class="method-selection">
+            <a href="?method=totp" class="method-option">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                <span>Authenticator App</span>
+            </a>
+            <a href="?method=email" class="method-option">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span>Email Code</span>
+            </a>
+        </div>
+        {% else %}
+        <form method="POST" action="{% url 'mfa_verify_submit' %}" class="mfa-form">
+            {% csrf_token %}
+            <input type="hidden" name="method" value="{{ method }}">
+            
+            <div class="form-group">
+                <label for="code">Verification Code</label>
+                <input type="text" id="code" name="code" 
+                       class="form-input code-input" 
+                       placeholder="000000" maxlength="6"
+                       pattern="[0-9]{6}" inputmode="numeric"
+                       autocomplete="one-time-code" required autofocus>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                <span>Verify</span>
+            </button>
+        </form>
+        
+        {% if method == 'email' %}
+        <div class="resend-code">
+            <p>Didn't receive the code?</p>
+            <form method="GET" action="{% url 'mfa_verify' %}">
+                <input type="hidden" name="method" value="email">
+                <input type="hidden" name="send_code" value="1">
+                <button type="submit" class="btn btn-link">Resend Code</button>
+            </form>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        <div class="mfa-help">
+            <a href="{% url 'mfa_bypass' %}">Can't access your MFA device?</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

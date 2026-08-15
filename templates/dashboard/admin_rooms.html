@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Room Management - SecureTalk Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Room Management</h1>
+        <span class="room-count">{{ total }} rooms</span>
+    </div>
+    
+    <div class="filter-bar">
+        <form method="GET" class="filter-form">
+            <div class="filter-group">
+                <label for="type">Type</label>
+                <select name="type" id="type" class="form-select">
+                    <option value="">All Types</option>
+                    <option value="public" {% if room_type_filter == 'public' %}selected{% endif %}>Public</option>
+                    <option value="private" {% if room_type_filter == 'private' %}selected{% endif %}>Private</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="archived">Status</label>
+                <select name="archived" id="archived" class="form-select">
+                    <option value="">All</option>
+                    <option value="false" {% if archived_filter == 'false' %}selected{% endif %}>Active</option>
+                    <option value="true" {% if archived_filter == 'true' %}selected{% endif %}>Archived</option>
+                </select>
+            </div>
+            
+            <div class="filter-group search-group">
+                <label for="search">Search</label>
+                <input type="text" name="search" id="search" class="form-input"
+                       placeholder="Room name" value="{{ search }}">
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{% url 'admin_rooms' %}" class="btn btn-secondary">Clear</a>
+        </form>
+    </div>
+    
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Room</th>
+                    <th>Type</th>
+                    <th>Owner</th>
+                    <th>Members</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr class="{% if room.is_archived %}archived{% endif %}">
+                    <td>
+                        <div class="room-cell">
+                            <span class="room-color" style="background-color: {{ room.banner_color }}"></span>
+                            <div>
+                                <a href="{% url 'room' room_slug=room.slug %}">{{ room.name }}</a>
+                                {% if room.description %}
+                                <span class="room-desc">{{ room.description|truncatewords:10 }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {% if room.is_private %}warning{% else %}info{% endif %}">
+                            {{ room.room_type|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'profile' username=room.owner.username %}">{{ room.owner.username }}</a>
+                    </td>
+                    <td>{{ room.member_count }}</td>
+                    <td>{{ room.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        {% if room.is_archived %}
+                        <span class="badge secondary">Archived</span>
+                        {% else %}
+                        <span class="badge success">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if room.is_archived %}
+                            <button class="btn btn-sm btn-success" onclick="restoreRoom('{{ room.slug }}')">Restore</button>
+                            {% else %}
+                            <button class="btn btn-sm btn-warning" onclick="archiveRoom('{{ room.slug }}')">Archive</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-message">No rooms found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="?page={{ page|add:-1 }}&{{ request.GET.urlencode }}" class="btn btn-secondary">Previous</a>
+        {% endif %}
+        
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+        
+        {% if page < total_pages %}
+        <a href="?page={{ page|add:1 }}&{{ request.GET.urlencode }}" class="btn btn-secondary">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const csrfToken = '{{ csrf_token }}';
+
+async function archiveRoom(roomSlug) {
+    if (!confirm('Are you sure you want to archive this room?')) return;
+    
+    const response = await fetch(`/admin/rooms/${roomSlug}/archive/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken }
+    });
+    
+    if (response.ok) {
+        showToast('Room archived successfully', 'success');
+        location.reload();
+    } else {
+        showToast('Failed to archive room', 'error');
+    }
+}
+
+async function restoreRoom(roomSlug) {
+    const response = await fetch(`/admin/rooms/${roomSlug}/restore/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken }
+    });
+    
+    if (response.ok) {
+        showToast('Room restored successfully', 'success');
+        location.reload();
+    } else {
+        showToast('Failed to restore room', 'error');
+    }
+}
+</script>
+{% endblock %}

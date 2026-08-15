@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Secure Your Account - SecureTalk{% endblock %}
+
+{% block content %}
+<div class="mfa-page">
+    <div class="mfa-container">
+        <div class="mfa-header">
+            <div class="shield-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <h1>Secure Your Account</h1>
+            <p>Add an extra layer of protection with multi-factor authentication</p>
+        </div>
+        
+        <div class="mfa-options">
+            <div class="mfa-card recommended">
+                <div class="recommended-badge">Recommended</div>
+                <div class="mfa-card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                        <line x1="12" y1="18" x2="12.01" y2="18"/>
+                    </svg>
+                </div>
+                <h3>Authenticator App</h3>
+                <p>Use an app like Google Authenticator or Authy to generate secure codes</p>
+                <ul class="mfa-benefits">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Works offline
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Most secure option
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Quick verification
+                    </li>
+                </ul>
+                <a href="{% url 'mfa_setup_totp' %}" class="btn btn-primary btn-block">
+                    <span>Set Up Authenticator</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                </a>
+            </div>
+            
+            <div class="mfa-card">
+                <div class="mfa-card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                </div>
+                <h3>Email Verification</h3>
+                <p>Receive a one-time code via email when you log in</p>
+                <ul class="mfa-benefits">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        No app required
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Easy to set up
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Works on any device
+                    </li>
+                </ul>
+                <form method="POST" action="{% url 'mfa_setup_email' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary btn-block">
+                        <span>Enable Email MFA</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="mfa-skip">
+            <form method="POST" action="{% url 'mfa_skip' %}">
+                {% csrf_token %}
+                <button type="submit" class="skip-link">I'll do this later</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
