@@ -22,3 +22,20 @@ media/
 .vscode/
 .idea/
 .DS_Store
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
