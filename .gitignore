@@ -1,0 +1,24 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Django
+django_cache/
+*.log
+db.sqlite3
+staticfiles/
+media/
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
